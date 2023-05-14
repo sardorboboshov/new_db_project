@@ -17,3 +17,4 @@ export const orgUserSql = (db_map, id_map, arr_map, user) => {
 };
 
 export const getHospitalsSQL = 'SELECT * from hospitals';
+export const insertDCs = 'INSERT into doctors values(?,?,?,?,?)';

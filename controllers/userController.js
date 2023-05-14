@@ -40,3 +40,52 @@ export const getUser = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+export const insertUsers = catchAsync(async (req, res, next) => {
+  const [patients] = await pool.query(
+    'SELECT * FROM users where userType = ?',
+    ['patient']
+  );
+  for(const patient of patients){
+    
+  }
+});
+
+export const createUser = catchAsync(async (req, res, next) => {
+  req.body = {
+    ...req.body,
+    name: 'sam',
+    surname: 'Doe',
+    birthday: '1999-01-01',
+    userType: 'patient',
+    mail: 'joe@gmail.com',
+    phone_number: '1234567890',
+  };
+  const user = req.body;
+  if (!user.userType) user.userType = 'patient';
+  const [rows] = await pool.query('SELECT * FROM users where mail = ?', [
+    user.mail,
+  ]);
+  if (rows.length > 0) {
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user: rows[0],
+      },
+    });
+  } else {
+    const [result] = await pool.query('INSERT into users SET ?', [user]);
+    user.ID = result.insertId;
+    const pbody = [user.ID, 'none', 'none'];
+    const [result2] = await pool.query('INSERT into ? SET ?', [
+      db_map[user.userType],
+      pbody,
+    ]);
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user: user,
+      },
+    });
+  }
+});
