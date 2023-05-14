@@ -1,34 +1,18 @@
-import express from 'express'
+import express from 'express';
+import dotenv from 'dotenv';
+import userRouter from './routes/userRouter.js';
+import hospitalRouter from './routes/hospitalRouter.js';
+const app = express();
 
-import { getNotes, getNote, createNote } from './database.js'
+app.use(express.json());
 
-const app = express()
+dotenv.config({ path: './.env' });
 
-app.use(express.json())
+app.use('/api/v1', userRouter);
+app.use('/api/v1', hospitalRouter);
 
-app.get("/notes", async (req, res) => {
-  const notes = await getNotes()
-  res.send(notes)
-})
+const port = process.env.PORT || 8080;
 
-app.get("/notes/:id", async (req, res) => {
-  const id = req.params.id
-  const note = await getNote(id)
-  res.send(note)
-})
-
-app.post("/notes", async (req, res) => {
-  const { title, contents } = req.body
-  const note = await createNote(title, contents)
-  res.status(201).send(note)
-})
-
-
-app.use((err, req, res, next) => {
-  console.error(err.stack)
-  res.status(500).send('Something broke 💩')
-})
-
-app.listen(8080, () => {
-  console.log('Server is running on port 8080')
-})
+app.listen(port, () => {
+  console.log(`Server is listening on port ${port}`);
+});
