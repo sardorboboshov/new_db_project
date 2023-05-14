@@ -1,6 +1,11 @@
 import catchAsync from '../utils/catchAsync.js';
 import pool from '../database.js';
-import { orgUserSql, getUserSQL } from '../queries.js';
+import {
+  orgUserSql,
+  getUserSQL,
+  insertUserTypeQuery,
+  fetchOnlyUserBody,
+} from '../queries.js';
 export const getAllUsers = catchAsync(async (req, res, next) => {
   const [rows] = await pool.query('SELECT * FROM users');
   res.status(200).json({
@@ -27,6 +32,11 @@ const arr_map = {
     'D_ID, name, surname, birthday, userType, mail, phone_number, hos_id, specializations,qualification,experience',
 };
 
+const spec_map = {
+  patient: 'insurance, allergy',
+  doctor: 'hos_id, specializations,qualification,experience',
+};
+
 export const getUser = catchAsync(async (req, res, next) => {
   const [rows] = await pool.query(getUserSQL(), [req.params.id]);
   const user = rows[0];
@@ -46,23 +56,26 @@ export const insertUsers = catchAsync(async (req, res, next) => {
     'SELECT * FROM users where userType = ?',
     ['patient']
   );
-  for(const patient of patients){
-    
+
+  for (const patient of patients) {
+    if (patient.ID === 1) continue;
+    await pool.query('INSERT into patients values(?,?,?)', [
+      patient.ID,
+      'none',
+      'none',
+    ]);
   }
+  res.status(200).json({
+    status: 'success',
+  });
 });
 
 export const createUser = catchAsync(async (req, res, next) => {
-  req.body = {
-    ...req.body,
-    name: 'sam',
-    surname: 'Doe',
-    birthday: '1999-01-01',
-    userType: 'patient',
-    mail: 'joe@gmail.com',
-    phone_number: '1234567890',
-  };
   const user = req.body;
-  if (!user.userType) user.userType = 'patient';
+  if (!user.userType)
+    res.status(400).json({
+      status: 'fail, probably missing one/more fields',
+    });
   const [rows] = await pool.query('SELECT * FROM users where mail = ?', [
     user.mail,
   ]);
@@ -74,17 +87,17 @@ export const createUser = catchAsync(async (req, res, next) => {
       },
     });
   } else {
-    const [result] = await pool.query('INSERT into users SET ?', [user]);
-    user.ID = result.insertId;
-    const pbody = [user.ID, 'none', 'none'];
-    const [result2] = await pool.query('INSERT into ? SET ?', [
-      db_map[user.userType],
-      pbody,
+    const [result] = await pool.query('INSERT into users SET ?', [
+      fetchOnlyUserBody(user),
     ]);
+    user.ID = result.insertId;
+    const [query, arr] = insertUserTypeQuery(req.body, user.ID);
+    // console.log(query, arr);
+    const [result2] = await pool.query(query, arr);
     res.status(200).json({
       status: 'success',
       data: {
-        user: user,
+        user: result2[0],
       },
     });
   }
