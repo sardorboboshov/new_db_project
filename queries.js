@@ -1,6 +1,9 @@
 const db_map = {
   patient: 'patients',
   doctor: 'doctors',
+  symptom: 'symptoms',
+  diseases: 'diseases',
+  tests: 'tests',
 };
 const id_map = {
   patient: 'P_ID',
@@ -12,6 +15,7 @@ const arr_map = {
     'P_ID, name, surname, birthday, userType, mail, phone_number, insurance, allergy',
   doctor:
     'D_ID, name, surname, birthday, userType, mail, phone_number, hos_id, specializations,qualification,experience',
+  symptom: 'symptom_id, symptom_name',
 };
 export const getUserSQL = () => {
   return `
